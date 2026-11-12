@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pendoTrack } from "./pendo";
 
 const app = express();
 
@@ -21,22 +22,31 @@ app.get("/api/state", (_req, res) => {
   res.json(state());
 });
 
-app.post("/api/increment", (_req, res) => {
+app.post("/api/increment", (req, res) => {
+  const previousValue = counter;
   counter += 1;
   lastAction = "increment";
   res.json(state());
+  // Fires after the server applies the change. Not awaited so the response isn't delayed.
+  void pendoTrack(req, "Counter incremented", { counter_value: counter, previous_value: previousValue });
 });
 
-app.post("/api/decrement", (_req, res) => {
+app.post("/api/decrement", (req, res) => {
+  const previousValue = counter;
   counter -= 1;
   lastAction = "decrement";
   res.json(state());
+  // Fires after the server applies the change. Not awaited so the response isn't delayed.
+  void pendoTrack(req, "Counter decremented", { counter_value: counter, previous_value: previousValue });
 });
 
-app.post("/api/reset", (_req, res) => {
+app.post("/api/reset", (req, res) => {
+  const previousValue = counter;
   counter = 0;
   lastAction = "reset";
   res.json(state());
+  // Fires after the server applies the change. Not awaited so the response isn't delayed.
+  void pendoTrack(req, "Counter reset", { counter_value: counter, previous_value: previousValue });
 });
 
 // Serve the built SPA (after the API routes so it doesn't shadow /api/*).
